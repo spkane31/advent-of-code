@@ -1,4 +1,4 @@
-use clap::{Arg, Command};
+use clap::Parser;
 use regex::Regex;
 use std::collections::HashMap;
 use std::fmt;
@@ -25,39 +25,71 @@ impl fmt::Display for AOCError {
     }
 }
 
-fn main() {
-    let matches = Command::new("Advent of Code CLI")
-        .version("1.0")
-        .author("Your Name <your.email@example.com>")
-        .about("Runs Advent of Code solutions")
-        .arg(
-            Arg::new("day")
-                .short('d')
-                .long("day")
-                .value_name("DAY")
-                .help("Specifies which day's solution to run"),
-        )
-        .get_matches();
+/// This is a simple program
+#[derive(Parser, Debug)]
+#[clap(author, version, about, long_about = None)]
+struct Args {
+    #[clap(long, short, action)]
+    all: bool,
 
-    if let Some(day) = matches.get_one::<String>("day") {
+    #[clap(long, short, action)]
+    day: Option<u32>,
+}
+
+fn main() {
+    let args = Args::parse();
+    if let Some(day) = args.day {
         let start = Instant::now();
-        match day.parse::<u32>() {
-            Ok(1) => match run_day_1() {
+        match day {
+            1 => match run_day_1() {
                 Ok(_) => (),
                 Err(e) => println!("Error in day 3: {:?}", e),
             },
-            Ok(2) => match run_day_2() {
+            2 => match run_day_2() {
                 Ok(_) => (),
                 Err(e) => println!("Error in day 2: {:?}", e),
             },
-            Ok(3) => match run_day_3() {
+            3 => match run_day_3() {
                 Ok(_) => (),
                 Err(e) => println!("Error in day 3: {:?}", e),
             },
-            Ok(n) => println!("Solution for day {} is not implemented yet.", n),
-            Err(_) => println!("Invalid day: {}", day),
+            4 => match run_day_4() {
+                Ok(_) => (),
+                Err(e) => println!("Error in day 4: {:?}", e),
+            },
+            n => println!("Solution for day {} is not implemented yet.", n),
         }
         println!("Total runtime: {:?}", start.elapsed());
+    } else if args.all {
+        let total = Instant::now();
+        let mut count: usize = 0;
+        for i in 1..26 {
+            let start = Instant::now();
+            match i {
+                1 => match run_day_1() {
+                    Ok(_) => (),
+                    Err(e) => println!("Error in day 1: {:?}", e),
+                },
+                2 => match run_day_2() {
+                    Ok(_) => (),
+                    Err(e) => println!("Error in day 2: {:?}", e),
+                },
+                3 => match run_day_3() {
+                    Ok(_) => (),
+                    Err(e) => println!("Error in day 3: {:?}", e),
+                },
+                4 => match run_day_4() {
+                    Ok(_) => (),
+                    Err(e) => println!("Error in day 4: {:?}", e),
+                },
+                _ => {}
+            }
+            count += 1;
+            println!("Day {} runtime: {:?}", i, start.elapsed());
+        }
+        let elapsed = total.elapsed();
+        println!("Total runtime: {:?}", total.elapsed());
+        println!("Average runtime: {:?}", elapsed / count as u32);
     } else {
         println!("Please specify a day using the --day option.");
     }
@@ -362,4 +394,131 @@ fn day1_part2() -> Result<i32> {
         sum += left_val * right_count;
     }
     Ok(sum)
+}
+
+fn run_day_4() -> Result<i32> {
+    let data = match read_from_file("day4/input.txt") {
+        Ok(d) => d,
+        Err(e) => {
+            return Err(e);
+        }
+    };
+
+    // Input is a word search, where the goal is to find all instances of XMAS in the puzzle
+
+    // First, we need to parse the data into a 2D vector
+    let mut puzzle: Vec<Vec<char>> = Vec::new();
+    for line in data.lines() {
+        let mut row = Vec::new();
+        for c in line.chars() {
+            row.push(c);
+        }
+        puzzle.push(row);
+    }
+
+    // Next, we need to find all instances of XMAS in the puzzle
+    // We'll use a graph search when we find the X, and search in all 8 directions
+    // for the rest of the word
+    let word = "XMAS";
+    let mut instances = 0;
+    for i in 0..puzzle.len() {
+        for j in 0..puzzle[i].len() {
+            if puzzle[i][j] == 'X' {
+                // Search in all 8 directions for the rest of the word
+                for (dx, dy) in &[
+                    (0, 1),
+                    (1, 0),
+                    (1, 1),
+                    (1, -1),
+                    (0, -1),
+                    (-1, 0),
+                    (-1, -1),
+                    (-1, 1),
+                ] {
+                    let mut found = true;
+                    for k in 1..word.len() {
+                        let new_i = i as i32 + k as i32 * dx;
+                        let new_j = j as i32 + k as i32 * dy;
+                        if new_i < 0
+                            || new_i >= puzzle.len() as i32
+                            || new_j < 0
+                            || new_j >= puzzle[i].len() as i32
+                        {
+                            found = false;
+                            break;
+                        }
+                        let c = match word.chars().nth(k) {
+                            Some(c) => c,
+                            None => {
+                                found = false;
+                                break;
+                            }
+                        };
+                        if puzzle[new_i as usize][new_j as usize] != c {
+                            found = false;
+                            break;
+                        }
+                    }
+                    if found {
+                        instances += 1;
+                    }
+                }
+            }
+        }
+    }
+
+    println!("Day 4 Part 1: {:?}", instances);
+
+    // For part 2, need to find all crossing MAS instances so:
+    // M . S
+    // . A .
+    // M . S
+    // The above counts for one instance, so we need to find all A
+    // instances and look for two M-S pairs diagonal to it
+    let mut instances = 0;
+    for a in 1..puzzle.len() - 1 {
+        for b in 1..puzzle[a].len() - 1 {
+            if puzzle[a][b] == 'A' {
+                // Configuration one is S . M above and S . M below, check for that specifically
+                if puzzle[a - 1][b - 1] == 'S'
+                    && puzzle[a - 1][b + 1] == 'M'
+                    && puzzle[a + 1][b - 1] == 'S'
+                    && puzzle[a + 1][b + 1] == 'M'
+                {
+                    instances += 1;
+                }
+
+                // Configuration two is M . M above and S . S below, check for that specifically
+                if puzzle[a - 1][b - 1] == 'M'
+                    && puzzle[a - 1][b + 1] == 'M'
+                    && puzzle[a + 1][b - 1] == 'S'
+                    && puzzle[a + 1][b + 1] == 'S'
+                {
+                    instances += 1;
+                }
+
+                // Configuration three is S . S above and M . M below, check for that specifically
+                if puzzle[a - 1][b - 1] == 'S'
+                    && puzzle[a - 1][b + 1] == 'S'
+                    && puzzle[a + 1][b - 1] == 'M'
+                    && puzzle[a + 1][b + 1] == 'M'
+                {
+                    instances += 1;
+                }
+
+                // Configuration four is M . S above and M . S below, check for that specifically
+                if puzzle[a - 1][b - 1] == 'M'
+                    && puzzle[a - 1][b + 1] == 'S'
+                    && puzzle[a + 1][b - 1] == 'M'
+                    && puzzle[a + 1][b + 1] == 'S'
+                {
+                    instances += 1;
+                }
+            }
+        }
+    }
+
+    println!("Day 4 Part 2: {:?}", instances);
+
+    Ok(0)
 }
