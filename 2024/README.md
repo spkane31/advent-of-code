@@ -8,6 +8,6 @@
 | 4       | 734.416µs     | |
 | 5       | 343.684208ms  | I am surprised this one even works |
 | 6       | 649.208µs     | wtf is this |
-| 7       | 1.490987792s  | why so slow? bc of recursion |
+| 7       | 945.167µs     | why so slow? bc of recursion, improved with backtracking |
 | ...     | ...           | |
-| Average | 70.392751ms   | |
+| Average | 15.359623ms   | |

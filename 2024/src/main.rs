@@ -975,14 +975,14 @@ fn run_day_7() -> Result<i32> {
         }
     };
 
-    let mut sum = 0;
-    let mut sum2: i64 = 0;
+    let mut sum: u64 = 0;
+    let mut sum2: u64 = 0;
     for line in data.lines() {
         // Split on the ":"
         let (total, vals) = line.split_once(":").unwrap();
 
         // total is an i32, vals is a space separated list of i32s
-        let total = match total.parse::<i64>() {
+        let total = match total.parse::<u64>() {
             Ok(t) => t,
             Err(e) => {
                 return Err(AOCError {
@@ -994,7 +994,7 @@ fn run_day_7() -> Result<i32> {
         let vals = vals.split_whitespace();
         let mut all_vals = Vec::new();
         for val in vals {
-            match val.parse::<i64>() {
+            match val.parse::<u64>() {
                 Ok(v) => all_vals.push(v),
                 Err(e) => {
                     return Err(AOCError {
@@ -1004,9 +1004,9 @@ fn run_day_7() -> Result<i32> {
             }
         }
 
-        if can_produce(total, all_vals.clone()) {
+        if match_operands_1(total, &all_vals.as_slice()) {
             sum += total;
-        } else if can_produce_part_2(total, all_vals.clone()) {
+        } else if match_operands(total, &all_vals.as_slice()) {
             sum2 += total;
         }
     }
@@ -1016,94 +1016,26 @@ fn run_day_7() -> Result<i32> {
     Ok(0)
 }
 
-fn can_produce(total: i64, vals: Vec<i64>) -> bool {
-    // can produce returns true if the total can be produced by any combination of + or * on the vals
-    if vals.len() == 2 {
-        return vals[0] + vals[1] == total || vals[0] * vals[1] == total;
+fn match_operands(val: u64, operands: &[u64]) -> bool {
+    match operands {
+        [] => panic!("No operands"),
+        [last] => *last == val,
+        [rest @ .., last] => {
+            let mask = 10_u64.pow(last.ilog10() as u32 + 1);
+            (val % last == 0 && match_operands(val / last, rest))
+                || (val >= *last && match_operands(val - last, rest))
+                || (val % mask == *last && match_operands(val / mask, rest))
+        }
     }
-
-    if total < vals[0] {
-        return false;
-    }
-
-    return can_produce(
-        total,
-        vec![
-            Nested::Single(vals[0] + vals[1]),
-            Nested::Multiple(vals[2..].to_vec()),
-        ]
-        .into_iter()
-        .flat_map(|item| match item {
-            Nested::Single(value) => vec![value],
-            Nested::Multiple(values) => values,
-        })
-        .collect(),
-    ) || can_produce(
-        total,
-        vec![
-            Nested::Single(vals[0] * vals[1]),
-            Nested::Multiple(vals[2..].to_vec()),
-        ]
-        .into_iter()
-        .flat_map(|item| match item {
-            Nested::Single(value) => vec![value],
-            Nested::Multiple(values) => values,
-        })
-        .collect(),
-    );
 }
 
-enum Nested {
-    Single(i64),
-    Multiple(Vec<i64>),
-}
-
-fn can_produce_part_2(total: i64, vals: Vec<i64>) -> bool {
-    // can produce returns true if the total can be produced by any combination of + or * on the vals
-    if vals.len() == 2 {
-        return vals[0] + vals[1] == total
-            || vals[0] * vals[1] == total
-            || format!("{}{}", vals[0], vals[1]).parse::<i64>().unwrap() == total;
+fn match_operands_1(val: u64, operands: &[u64]) -> bool {
+    match operands {
+        [] => panic!("No operands"),
+        [last] => *last == val,
+        [rest @ .., last] => {
+            (val % last == 0 && match_operands(val / last, rest))
+                || (val >= *last && match_operands(val - last, rest))
+        }
     }
-
-    if total < vals[0] {
-        return false;
-    }
-
-    let add = vals[0] + vals[1];
-    let mul = vals[0] * vals[1];
-    let combine = format!("{}{}", vals[0], vals[1]).parse::<i64>().unwrap();
-    // println!("Combine {:?}{:?} to get {:?}", vals[0], vals[1], combine);
-
-    return can_produce_part_2(
-        total,
-        vec![Nested::Single(add), Nested::Multiple(vals[2..].to_vec())]
-            .into_iter()
-            .flat_map(|item| match item {
-                Nested::Single(value) => vec![value],
-                Nested::Multiple(values) => values,
-            })
-            .collect(),
-    ) || can_produce_part_2(
-        total,
-        vec![Nested::Single(mul), Nested::Multiple(vals[2..].to_vec())]
-            .into_iter()
-            .flat_map(|item| match item {
-                Nested::Single(value) => vec![value],
-                Nested::Multiple(values) => values,
-            })
-            .collect(),
-    ) || can_produce_part_2(
-        total,
-        vec![
-            Nested::Single(combine),
-            Nested::Multiple(vals[2..].to_vec()),
-        ]
-        .into_iter()
-        .flat_map(|item| match item {
-            Nested::Single(value) => vec![value],
-            Nested::Multiple(values) => values,
-        })
-        .collect(),
-    );
 }
