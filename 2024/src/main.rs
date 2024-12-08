@@ -61,6 +61,14 @@ fn main() {
                 Ok(_) => (),
                 Err(e) => println!("Error in day 5: {:?}", e),
             },
+            6 => match run_day_6() {
+                Ok(_) => (),
+                Err(e) => println!("Error in day 6: {:?}", e),
+            },
+            7 => match run_day_7() {
+                Ok(_) => (),
+                Err(e) => println!("Error in day 7: {:?}", e),
+            },
             n => println!("Solution for day {} is not implemented yet.", n),
         }
         println!("Total runtime: {:?}", start.elapsed());
@@ -89,6 +97,14 @@ fn main() {
                 5 => match run_day_5() {
                     Ok(_) => (),
                     Err(e) => println!("Error in day 5: {:?}", e),
+                },
+                6 => match run_day_6() {
+                    Ok(_) => (),
+                    Err(e) => println!("Error in day 6: {:?}", e),
+                },
+                7 => match run_day_7() {
+                    Ok(_) => (),
+                    Err(e) => println!("Error in day 7: {:?}", e),
                 },
                 _ => {}
             }
@@ -711,4 +727,383 @@ fn swap(vec: &mut Vec<i32>, index1: usize, index2: usize) {
             std::mem::swap(&mut right[0], &mut left[index2]);
         }
     }
+}
+
+fn run_day_6() -> Result<i32> {
+    let data = match read_from_file("day6/sample.txt") {
+        Ok(d) => d,
+        Err(e) => {
+            return Err(e);
+        }
+    };
+
+    // Conver the input into a 2D vector of chars
+    let mut grid: Vec<Vec<char>> = Vec::new();
+    for line in data.lines() {
+        let mut row = Vec::new();
+        for c in line.chars() {
+            row.push(c);
+        }
+        grid.push(row);
+    }
+
+    part1(grid.clone());
+
+    let mut set = HashSet::new();
+
+    let (mut i, mut j, mut on_board) = has_guard(grid.clone());
+    while on_board {
+        (grid, set) = move_guard(grid.clone(), i, j, set.clone());
+        (i, j, on_board) = has_guard(grid.clone());
+    }
+
+    println!("Day 6 Part 1: {:?}", set.len());
+
+    let mut grid: Vec<Vec<char>> = Vec::new();
+    for line in data.lines() {
+        let mut row = Vec::new();
+        for c in line.chars() {
+            row.push(c);
+        }
+        grid.push(row);
+    }
+
+    Ok(0)
+}
+
+fn has_guard(grid: Vec<Vec<char>>) -> (usize, usize, bool) {
+    // Looking for either ^, >, <, or v
+    for i in 0..grid.len() {
+        for j in 0..grid[i].len() {
+            if grid[i][j] == '^' || grid[i][j] == '>' || grid[i][j] == '<' || grid[i][j] == 'v' {
+                return (i, j, true);
+            }
+        }
+    }
+    (0, 0, false)
+}
+
+fn move_guard(
+    mut grid: Vec<Vec<char>>,
+    i: usize,
+    j: usize,
+    mut set: HashSet<(usize, usize)>,
+) -> (Vec<Vec<char>>, HashSet<(usize, usize)>) {
+    // Get the character at i,j and find di, dj for this move
+    let c = grid[i][j];
+    let (di, dj) = match c {
+        '^' => (-1, 0),
+        '>' => (0, 1),
+        '<' => (0, -1),
+        'v' => (1, 0),
+        _ => (0, 0),
+    };
+    set.insert((i, j));
+
+    // Now move the guard in the direction of di,dj until we hit a wall '#' or move off the board (negative values)
+    let mut new_i = i as i32 + di;
+    let mut new_j = j as i32 + dj;
+    while new_i >= 0
+        && new_j >= 0
+        && new_i < grid.len() as i32
+        && new_j < grid[new_i as usize].len() as i32
+    {
+        if grid[new_i as usize][new_j as usize] == '#' {
+            break;
+        }
+        set.insert((new_i as usize, new_j as usize));
+        grid[new_i as usize][new_j as usize] = 'X';
+        new_i += di;
+        new_j += dj;
+    }
+    // Set the previous spot to '.'
+    grid[i][j] = 'X';
+    // Set the new spot to the guard with a 90 degree right turn
+    let new_c = match c {
+        '^' => '>',
+        '>' => 'v',
+        '<' => '^',
+        'v' => '<',
+        _ => '.',
+    };
+    if new_i >= 0
+        && new_j >= 0
+        && new_i < grid.len() as i32
+        && new_j < grid[new_i as usize].len() as i32
+    {
+        grid[(new_i - di) as usize][(new_j - dj) as usize] = new_c;
+    }
+    return (grid, set);
+}
+
+fn pretty_print(grid: &Vec<Vec<char>>) {
+    for row in grid {
+        for c in row {
+            print!("{}", c);
+        }
+        println!();
+    }
+}
+
+type Graph = HashMap<(usize, usize), HashSet<(usize, usize)>>;
+
+fn print_graph(graph: &Graph) {
+    // Want to print as a grid, with '.' indicating no edge and '#' indicating an edge
+    let mut grid: Vec<Vec<char>> = Vec::new();
+    for i in 0..10 {
+        let mut row = Vec::new();
+        for j in 0..10 {
+            row.push('.');
+        }
+        grid.push(row);
+    }
+
+    for ((i, j), h) in graph {
+        // for (new_i, new_j) in h {
+        grid[*i][*j] = '#';
+        // }
+    }
+
+    pretty_print(&grid);
+}
+
+fn add_edge(graph: &mut Graph, i: usize, j: usize, new_i: usize, new_j: usize) {
+    if i == new_i && j == new_j {
+        return;
+    }
+    println!(
+        "Adding edge from {:?} {:?} to {:?} {:?}",
+        i, j, new_i, new_j
+    );
+    match graph.get_mut(&(i, j)) {
+        Some(h) => {
+            h.insert((new_i, new_j));
+        }
+        None => {
+            let mut h = HashSet::new();
+            h.insert((new_i, new_j));
+            graph.insert((i, j), h);
+        }
+    }
+}
+
+fn size(graph: &Graph) -> usize {
+    let mut s: usize = 0;
+
+    for (_, h) in graph {
+        s += h.len();
+    }
+
+    return s;
+}
+
+fn part1(grid: Vec<Vec<char>>) {
+    let mut graph: Graph = HashMap::new();
+
+    let (mut a, mut b) = (0, 0);
+    for i in 0..grid.len() {
+        for j in 0..grid[i].len() {
+            if grid[i][j] == '<' || grid[i][j] == '>' || grid[i][j] == '^' || grid[i][j] == 'v' {
+                (a, b) = (i, j);
+                break;
+            }
+        }
+        if a != 0 && b != 0 {
+            break;
+        }
+    }
+
+    println!("Found starting point at {:?} {:?}", a, b);
+
+    // Now walk and add edges until the guard walks off the map (defined as the width and length of the grid)
+    let mut i = a;
+    let mut j = b;
+    let mut c = grid[i][j];
+    while i > 0 && j > 0 && i < grid.len() - 1 && j < grid[i].len() - 1 {
+        let (mut di, mut dj) = match c {
+            '^' => (-1, 0),
+            '>' => (0, 1),
+            'v' => (1, 0),
+            '<' => (0, -1),
+            _ => (0, 0),
+        };
+
+        // Walk in the direction of di, dj until we hit an obstacle (#) or walk off the map
+        let mut new_i = i as i32 + di;
+        let mut new_j = j as i32 + dj;
+        while new_i >= 0 && new_j >= 0 && new_i < grid.len() as i32 && new_j < grid[i].len() as i32
+        {
+            if grid[new_i as usize][new_j as usize] == '#' {
+                new_i -= di;
+                new_j -= dj;
+                println!("Rotating at {:?} {:?}", new_i, new_j);
+                // Rotate the direction 90 degrees
+                (di, dj) = match c {
+                    '^' => (0, 1),
+                    '>' => (1, 0),
+                    'v' => (0, -1),
+                    '<' => (-1, 0),
+                    _ => (0, 0),
+                };
+                c = match c {
+                    '^' => '>',
+                    '>' => 'v',
+                    'v' => '<',
+                    '<' => '^',
+                    _ => '.',
+                };
+                // break;
+                continue;
+            }
+            add_edge(&mut graph, i, j, new_i as usize, new_j as usize);
+            i = new_i as usize;
+            j = new_j as usize;
+            new_i += di;
+            new_j += dj;
+        }
+    }
+
+    print_graph(&graph);
+    println!("Day 6 Part 1: {:?}", size(&graph));
+}
+
+fn run_day_7() -> Result<i32> {
+    let data = match read_from_file("day7/input.txt") {
+        Ok(d) => d,
+        Err(e) => {
+            return Err(e);
+        }
+    };
+
+    let mut sum = 0;
+    let mut sum2: i64 = 0;
+    for line in data.lines() {
+        // Split on the ":"
+        let (total, vals) = line.split_once(":").unwrap();
+
+        // total is an i32, vals is a space separated list of i32s
+        let total = match total.parse::<i64>() {
+            Ok(t) => t,
+            Err(e) => {
+                return Err(AOCError {
+                    details: format!("Error parsing total ({:?}): {:?}", total, e),
+                })
+            }
+        };
+
+        let vals = vals.split_whitespace();
+        let mut all_vals = Vec::new();
+        for val in vals {
+            match val.parse::<i64>() {
+                Ok(v) => all_vals.push(v),
+                Err(e) => {
+                    return Err(AOCError {
+                        details: format!("Error parsing val: {:?}", e),
+                    })
+                }
+            }
+        }
+
+        if can_produce(total, all_vals.clone()) {
+            sum += total;
+        } else if can_produce_part_2(total, all_vals.clone()) {
+            sum2 += total;
+        }
+    }
+    println!("Day 7 Part 1: {:?}", sum);
+    println!("Day 7 Part 2: {:?}", sum + sum2);
+
+    Ok(0)
+}
+
+fn can_produce(total: i64, vals: Vec<i64>) -> bool {
+    // can produce returns true if the total can be produced by any combination of + or * on the vals
+    if vals.len() == 2 {
+        return vals[0] + vals[1] == total || vals[0] * vals[1] == total;
+    }
+
+    if total < vals[0] {
+        return false;
+    }
+
+    return can_produce(
+        total,
+        vec![
+            Nested::Single(vals[0] + vals[1]),
+            Nested::Multiple(vals[2..].to_vec()),
+        ]
+        .into_iter()
+        .flat_map(|item| match item {
+            Nested::Single(value) => vec![value],
+            Nested::Multiple(values) => values,
+        })
+        .collect(),
+    ) || can_produce(
+        total,
+        vec![
+            Nested::Single(vals[0] * vals[1]),
+            Nested::Multiple(vals[2..].to_vec()),
+        ]
+        .into_iter()
+        .flat_map(|item| match item {
+            Nested::Single(value) => vec![value],
+            Nested::Multiple(values) => values,
+        })
+        .collect(),
+    );
+}
+
+enum Nested {
+    Single(i64),
+    Multiple(Vec<i64>),
+}
+
+fn can_produce_part_2(total: i64, vals: Vec<i64>) -> bool {
+    // can produce returns true if the total can be produced by any combination of + or * on the vals
+    if vals.len() == 2 {
+        return vals[0] + vals[1] == total
+            || vals[0] * vals[1] == total
+            || format!("{}{}", vals[0], vals[1]).parse::<i64>().unwrap() == total;
+    }
+
+    if total < vals[0] {
+        return false;
+    }
+
+    let add = vals[0] + vals[1];
+    let mul = vals[0] * vals[1];
+    let combine = format!("{}{}", vals[0], vals[1]).parse::<i64>().unwrap();
+    // println!("Combine {:?}{:?} to get {:?}", vals[0], vals[1], combine);
+
+    return can_produce_part_2(
+        total,
+        vec![Nested::Single(add), Nested::Multiple(vals[2..].to_vec())]
+            .into_iter()
+            .flat_map(|item| match item {
+                Nested::Single(value) => vec![value],
+                Nested::Multiple(values) => values,
+            })
+            .collect(),
+    ) || can_produce_part_2(
+        total,
+        vec![Nested::Single(mul), Nested::Multiple(vals[2..].to_vec())]
+            .into_iter()
+            .flat_map(|item| match item {
+                Nested::Single(value) => vec![value],
+                Nested::Multiple(values) => values,
+            })
+            .collect(),
+    ) || can_produce_part_2(
+        total,
+        vec![
+            Nested::Single(combine),
+            Nested::Multiple(vals[2..].to_vec()),
+        ]
+        .into_iter()
+        .flat_map(|item| match item {
+            Nested::Single(value) => vec![value],
+            Nested::Multiple(values) => values,
+        })
+        .collect(),
+    );
 }
