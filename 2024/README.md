@@ -10,5 +10,6 @@
 | 6       | 649.208µs     | wtf is this |
 | 7       | 945.167µs     | why so slow? bc of recursion, improved with backtracking |
 | 8       | 484µs         | |
+| 9       | 686.125µs     | took a while to remember how to write a heap |
 | ...     | ...           | |
 | Average | 14.116775ms   | |
