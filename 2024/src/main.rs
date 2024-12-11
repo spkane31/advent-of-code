@@ -6,6 +6,8 @@ use std::collections::{HashMap, HashSet, VecDeque};
 use std::fmt;
 use std::time::Instant;
 
+mod days;
+
 type Result<T> = std::result::Result<T, AOCError>;
 
 // Define our error types. These may be customized for our error handling cases.
@@ -43,11 +45,11 @@ fn main() {
     if let Some(day) = args.day {
         let start = Instant::now();
         match day {
-            1 => match run_day_1() {
+            1 => match days::day01::run() {
                 Ok(_) => (),
-                Err(e) => println!("Error in day 3: {:?}", e),
+                Err(e) => println!("Error in day 1: {:?}", e),
             },
-            2 => match run_day_2() {
+            2 => match days::day02::run() {
                 Ok(_) => (),
                 Err(e) => println!("Error in day 2: {:?}", e),
             },
@@ -89,14 +91,27 @@ fn main() {
     } else if args.all {
         let total = Instant::now();
         let mut count: usize = 0;
+
+        let funcs = vec![days::day01::run, days::day02::run, days::day10::run];
+
+        for func in funcs {
+            let start = Instant::now();
+            match func() {
+                Ok(_) => (),
+                Err(e) => println!("Error in day {}: {:?}", count + 1, e),
+            }
+            count += 1;
+            println!("Day {} runtime: {:?}", count, start.elapsed());
+        }
+
         for i in 1..26 {
             let start = Instant::now();
             match i {
-                1 => match run_day_1() {
+                1 => match days::day01::run() {
                     Ok(_) => (),
                     Err(e) => println!("Error in day 1: {:?}", e),
                 },
-                2 => match run_day_2() {
+                2 => match days::day02::run() {
                     Ok(_) => (),
                     Err(e) => println!("Error in day 2: {:?}", e),
                 },
@@ -143,108 +158,6 @@ fn main() {
     } else {
         println!("Please specify a day using the --day option.");
     }
-}
-
-fn run_day_1() -> Result<i32> {
-    match day1_part1() {
-        Ok(val) => {
-            println!("Day 1 Part 1: {}", val);
-        }
-        Err(e) => {
-            return Err(e);
-        }
-    };
-
-    match day1_part2() {
-        Ok(val) => {
-            println!("Day 1 Part 2: {}", val);
-        }
-        Err(e) => {
-            return Err(e);
-        }
-    };
-    Ok(0)
-}
-
-fn run_day_2() -> Result<i32> {
-    let data = match read_from_file("day2/part1.txt") {
-        Ok(d) => d,
-        Err(e) => {
-            return Err(e);
-        }
-    };
-
-    let mut safe_reports = 0;
-
-    for report in data.lines() {
-        // each report is a space-separated list of ints
-        let split = report.split_whitespace();
-        let mut vals = Vec::new();
-        for val in split {
-            match val.parse::<i32>() {
-                Ok(v) => vals.push(v),
-                Err(_) => continue,
-            }
-        }
-        if is_safe_report(&vals) {
-            safe_reports += 1;
-        }
-    }
-    println!("Day 2 Part 1: {}", safe_reports);
-
-    let mut safe_reports = 0;
-    for report in data.lines() {
-        // Same as the above, but a report is safe if we can remove any single level and still have a safe report
-        let split = report.split_whitespace();
-        let mut vals = Vec::new();
-        for val in split {
-            match val.parse::<i32>() {
-                Ok(v) => vals.push(v),
-                Err(_) => continue,
-            }
-        }
-
-        if is_safe_report(&vals) {
-            safe_reports += 1;
-            continue;
-        } else {
-            // Try removing each value and check if the report is safe
-            for i in 0..vals.len() {
-                let mut new_vals = vals.clone();
-                new_vals.remove(i);
-                if is_safe_report(&new_vals) {
-                    safe_reports += 1;
-                    break;
-                }
-            }
-        }
-    }
-    println!("Day 2 Part 2: {}", safe_reports);
-    Ok(0)
-}
-
-fn is_safe_report(vals: &[i32]) -> bool {
-    // if vals is either stricly increasing or strictly decreasing by 1, 2, or 3 increment safe_reports
-    // get the differences between each element
-    let mut differences = Vec::new();
-    for i in 0..vals.len() - 1 {
-        differences.push(vals[i + 1] - vals[i]);
-    }
-
-    let min = differences.iter().min().unwrap();
-    let max = differences.iter().max().unwrap();
-    if *min < -3 || *max > 3 {
-        return false;
-    }
-    if *min < 0 && *max > 0 {
-        return false;
-    }
-
-    if differences.iter().all(|&x| x >= -3 && x <= 3 && x != 0) {
-        return true;
-    } else {
-    }
-    false
 }
 
 fn run_day_3() -> Result<i32> {
@@ -321,9 +234,7 @@ fn run_day_3() -> Result<i32> {
             "don't()" => {
                 processing = false;
             }
-            _ => {
-                println!("Skipping: {:?}", cap);
-            }
+            _ => {}
         };
     }
 
@@ -344,99 +255,6 @@ fn read_from_file(file_path: &str) -> Result<String> {
         }
     };
     Ok(data)
-}
-
-fn day1_part1() -> Result<i32> {
-    let data = match read_from_file("day1/part1.txt") {
-        Ok(d) => d,
-        Err(e) => {
-            return Err(e);
-        }
-    };
-
-    // data is a list of numbers, get each number and add the first to left vec and second to right vec
-    let mut left = Vec::new();
-    let mut right = Vec::new();
-    for line in data.lines() {
-        let mut split = line.split_whitespace();
-
-        match split.next() {
-            None => continue,
-            Some(v) => match v.parse::<i32>() {
-                Ok(l) => left.push(l),
-                Err(_) => continue,
-            },
-        }
-        match split.next() {
-            None => continue,
-            Some(v) => match v.parse::<i32>() {
-                Ok(l) => right.push(l),
-                Err(_) => continue,
-            },
-        }
-    }
-
-    // Sort each vector
-    left.sort();
-    right.sort();
-
-    // Find the difference between each index of left and right and sum it
-    let mut sum = 0;
-    for i in 0..left.len() {
-        sum += (left[i] - right[i]).abs();
-    }
-
-    Ok(sum)
-}
-
-fn day1_part2() -> Result<i32> {
-    let data = match read_from_file("day1/part1.txt") {
-        Ok(d) => d,
-        Err(_) => {
-            return Err(AOCError {
-                details: "Error reading file".to_string(),
-            });
-        }
-    };
-
-    // create a vector for each in the left column, and a map of counts for values in the right column
-    let mut left: Vec<i32> = Vec::new();
-    let mut right: HashMap<i32, i32> = std::collections::HashMap::new();
-
-    for line in data.lines() {
-        let mut split = line.split_whitespace();
-        match split.next() {
-            None => continue,
-            Some(s) => match s.parse::<i32>() {
-                Ok(l) => left.push(l),
-                Err(_) => continue,
-            },
-        }
-
-        let right_val = match split.next() {
-            None => continue,
-            Some(s) => match s.parse::<i32>() {
-                Ok(l) => l,
-                Err(_) => continue,
-            },
-        };
-        // let right_val = split.next().unwrap().parse::<i32>().unwrap();
-        let count = right.entry(right_val).or_insert(0);
-        *count += 1;
-    }
-
-    let mut sum: i32 = 0;
-
-    // For each value in the left column, find the count of the value in the right column
-    // and add left_val * right_count to the sum
-    for left_val in left {
-        let right_count = match right.get(&left_val) {
-            Some(count) => count,
-            None => &0,
-        };
-        sum += left_val * right_count;
-    }
-    Ok(sum)
 }
 
 fn run_day_4() -> Result<i32> {
@@ -887,18 +705,12 @@ fn print_graph(graph: &Graph) {
     for ((i, j), _) in graph {
         grid[*i][*j] = '#';
     }
-
-    pretty_print(&grid);
 }
 
 fn add_edge(graph: &mut Graph, i: usize, j: usize, new_i: usize, new_j: usize) {
     if i == new_i && j == new_j {
         return;
     }
-    println!(
-        "Adding edge from {:?} {:?} to {:?} {:?}",
-        i, j, new_i, new_j
-    );
     match graph.get_mut(&(i, j)) {
         Some(h) => {
             h.insert((new_i, new_j));
@@ -937,8 +749,6 @@ fn part1(grid: Vec<Vec<char>>) {
         }
     }
 
-    println!("Found starting point at {:?} {:?}", a, b);
-
     // Now walk and add edges until the guard walks off the map (defined as the width and length of the grid)
     let mut i = a;
     let mut j = b;
@@ -960,7 +770,6 @@ fn part1(grid: Vec<Vec<char>>) {
             if grid[new_i as usize][new_j as usize] == '#' {
                 new_i -= di;
                 new_j -= dj;
-                println!("Rotating at {:?} {:?}", new_i, new_j);
                 // Rotate the direction 90 degrees
                 (di, dj) = match c {
                     '^' => (0, 1),
@@ -987,7 +796,6 @@ fn part1(grid: Vec<Vec<char>>) {
         }
     }
 
-    print_graph(&graph);
     println!("Day 6 Part 1: {:?}", size(&graph));
 }
 
@@ -1417,8 +1225,8 @@ fn run_day_10() -> Result<i32> {
 
     let total_score = calculate_total_score(vals.clone());
     let total_rating = calculate_total_rating(vals.clone());
-    println!("Total score of all trailheads: {}", total_score);
-    println!("Total rating of all trailheads: {}", total_rating);
+    println!("Day 10 Part 1: {}", total_score);
+    println!("Day 10 Part 2: {}", total_rating);
 
     Ok(0)
 }
