@@ -12,5 +12,6 @@
 | 8       | 484µs         | |
 | 9       | 686.125µs     | took a while to remember how to write a heap |
 | 10      | 2.891833ms    | |
+| 11      | 19.26525ms    | memoization is a real memory dig |
 | ...     | ...           | |
-| Average | 14.791705ms   | |
+| Average | 13.738519ms   | |
