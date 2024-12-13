@@ -89,6 +89,10 @@ fn main() {
                 Ok(_) => (),
                 Err(e) => println!("Error in day 11: {:?}", e),
             },
+            12 => match days::day12::run() {
+                Ok(_) => (),
+                Err(e) => println!("Error in day 12: {:?}", e),
+            },
             n => println!("Solution for day {} is not implemented yet.", n),
         }
         println!("Total runtime: {:?}", start.elapsed());
@@ -154,6 +158,10 @@ fn main() {
                 11 => match days::day11::run() {
                     Ok(_) => (),
                     Err(e) => println!("Error in day 11: {:?}", e),
+                },
+                12 => match days::day12::run() {
+                    Ok(_) => (),
+                    Err(e) => println!("Error in day 12: {:?}", e),
                 },
                 _ => {}
             }

@@ -13,5 +13,6 @@
 | 9       | 686.125µs     | took a while to remember how to write a heap |
 | 10      | 2.891833ms    | |
 | 11      | 19.26525ms    | memoization is a real memory dig |
+| 12      | 12.32958ms    | do not understand what I wrote to find sides/corners |
 | ...     | ...           | |
-| Average | 13.738519ms   | |
+| Average | 14.083828ms   | |
