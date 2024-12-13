@@ -1,5 +1,4 @@
 use clap::Parser;
-use regex::Regex;
 use std::cmp::Ordering;
 use std::collections::BinaryHeap;
 use std::collections::{HashMap, HashSet, VecDeque};
@@ -53,11 +52,11 @@ fn main() {
                 Ok(_) => (),
                 Err(e) => println!("Error in day 2: {:?}", e),
             },
-            3 => match run_day_3() {
+            3 => match days::day03::run() {
                 Ok(_) => (),
                 Err(e) => println!("Error in day 3: {:?}", e),
             },
-            4 => match run_day_4() {
+            4 => match days::day04::run() {
                 Ok(_) => (),
                 Err(e) => println!("Error in day 4: {:?}", e),
             },
@@ -112,6 +111,23 @@ fn main() {
             println!("Day {} runtime: {:?}", count, start.elapsed());
         }
 
+        let funcs = vec![
+            days::day01::run,
+            days::day02::run,
+            days::day03::run,
+            days::day04::run,
+        ];
+
+        for func in funcs {
+            let start = Instant::now();
+            match func() {
+                Ok(_) => (),
+                Err(e) => println!("Error in day {}: {:?}", count + 1, e),
+            }
+            count += 1;
+            println!("Day {} runtime: {:?}", count, start.elapsed());
+        }
+
         for i in 1..26 {
             let start = Instant::now();
             match i {
@@ -123,11 +139,11 @@ fn main() {
                     Ok(_) => (),
                     Err(e) => println!("Error in day 2: {:?}", e),
                 },
-                3 => match run_day_3() {
+                3 => match days::day03::run() {
                     Ok(_) => (),
                     Err(e) => println!("Error in day 3: {:?}", e),
                 },
-                4 => match run_day_4() {
+                4 => match days::day04::run() {
                     Ok(_) => (),
                     Err(e) => println!("Error in day 4: {:?}", e),
                 },
@@ -176,89 +192,6 @@ fn main() {
     }
 }
 
-fn run_day_3() -> Result<i32> {
-    let data = match read_from_file("day3/part1.txt") {
-        Ok(d) => d,
-        Err(e) => {
-            return Err(e);
-        }
-    };
-
-    // Sample input is xmul(2,4)%&mul[3,7]!@^do_not_mul(5,5)+mul(32,64]then(mul(11,8)mul(8,5))
-    // What I want is only the mul(number,number) instructions, which can be done with regex
-    // I want to get all of the valid instances of mul(number,number) and then multiply the
-    // two numbers together and get the sum
-    let re = match Regex::new(r"mul\((\d+),(\d+)\)") {
-        Ok(r) => r,
-        Err(e) => {
-            return Err(AOCError {
-                details: format!("Error creating regex: {:?}", e),
-            });
-        }
-    };
-
-    let mut sum = 0;
-    for cap in re.captures_iter(&data) {
-        let num1 = match cap[1].parse::<i32>() {
-            Ok(n) => n,
-            Err(_) => continue,
-        };
-        let num2 = match cap[2].parse::<i32>() {
-            Ok(n) => n,
-            Err(_) => continue,
-        };
-        sum += num1 * num2;
-    }
-
-    println!("Day 3 Part 1: {:?}", sum);
-
-    // For part two we also want to capture the instructions for 'do()' and "don't()", when
-    // we hit "don't" we stop processing until we hit "do" again
-    let re = match Regex::new(r"mul\((\d+),(\d+)\)|do\(\)|don't\(\)") {
-        Ok(r) => r,
-        Err(e) => {
-            return Err(AOCError {
-                details: format!("Error creating regex: {:?}", e),
-            });
-        }
-    };
-
-    let mut sum = 0;
-    let mut processing: bool = true;
-    for cap in re.captures_iter(&data) {
-        let matched = match cap.get(0) {
-            Some(m) => m.as_str(),
-            None => continue,
-        };
-        match matched {
-            m if m.starts_with("mul") => {
-                if processing {
-                    let num1 = match cap[1].parse::<i32>() {
-                        Ok(n) => n,
-                        Err(_) => continue,
-                    };
-                    let num2 = match cap[2].parse::<i32>() {
-                        Ok(n) => n,
-                        Err(_) => continue,
-                    };
-                    sum += num1 * num2;
-                }
-            }
-            "do()" => {
-                processing = true;
-            }
-            "don't()" => {
-                processing = false;
-            }
-            _ => {}
-        };
-    }
-
-    println!("Day 3 Part 2: {:?}", sum);
-
-    Ok(0)
-}
-
 fn read_from_file(file_path: &str) -> Result<String> {
     // Read the data from the specified file path
     let data = match std::fs::read_to_string(file_path) {
@@ -271,133 +204,6 @@ fn read_from_file(file_path: &str) -> Result<String> {
         }
     };
     Ok(data)
-}
-
-fn run_day_4() -> Result<i32> {
-    let data = match read_from_file("day4/input.txt") {
-        Ok(d) => d,
-        Err(e) => {
-            return Err(e);
-        }
-    };
-
-    // Input is a word search, where the goal is to find all instances of XMAS in the puzzle
-
-    // First, we need to parse the data into a 2D vector
-    let mut puzzle: Vec<Vec<char>> = Vec::new();
-    for line in data.lines() {
-        let mut row = Vec::new();
-        for c in line.chars() {
-            row.push(c);
-        }
-        puzzle.push(row);
-    }
-
-    // Next, we need to find all instances of XMAS in the puzzle
-    // We'll use a graph search when we find the X, and search in all 8 directions
-    // for the rest of the word
-    let word = "XMAS";
-    let mut instances = 0;
-    for i in 0..puzzle.len() {
-        for j in 0..puzzle[i].len() {
-            if puzzle[i][j] == 'X' {
-                // Search in all 8 directions for the rest of the word
-                for (dx, dy) in &[
-                    (0, 1),
-                    (1, 0),
-                    (1, 1),
-                    (1, -1),
-                    (0, -1),
-                    (-1, 0),
-                    (-1, -1),
-                    (-1, 1),
-                ] {
-                    let mut found = true;
-                    for k in 1..word.len() {
-                        let new_i = i as i32 + k as i32 * dx;
-                        let new_j = j as i32 + k as i32 * dy;
-                        if new_i < 0
-                            || new_i >= puzzle.len() as i32
-                            || new_j < 0
-                            || new_j >= puzzle[i].len() as i32
-                        {
-                            found = false;
-                            break;
-                        }
-                        let c = match word.chars().nth(k) {
-                            Some(c) => c,
-                            None => {
-                                found = false;
-                                break;
-                            }
-                        };
-                        if puzzle[new_i as usize][new_j as usize] != c {
-                            found = false;
-                            break;
-                        }
-                    }
-                    if found {
-                        instances += 1;
-                    }
-                }
-            }
-        }
-    }
-
-    println!("Day 4 Part 1: {:?}", instances);
-
-    // For part 2, need to find all crossing MAS instances so:
-    // M . S
-    // . A .
-    // M . S
-    // The above counts for one instance, so we need to find all A
-    // instances and look for two M-S pairs diagonal to it
-    let mut instances = 0;
-    for a in 1..puzzle.len() - 1 {
-        for b in 1..puzzle[a].len() - 1 {
-            if puzzle[a][b] == 'A' {
-                // Configuration one is S . M above and S . M below, check for that specifically
-                if puzzle[a - 1][b - 1] == 'S'
-                    && puzzle[a - 1][b + 1] == 'M'
-                    && puzzle[a + 1][b - 1] == 'S'
-                    && puzzle[a + 1][b + 1] == 'M'
-                {
-                    instances += 1;
-                }
-
-                // Configuration two is M . M above and S . S below, check for that specifically
-                if puzzle[a - 1][b - 1] == 'M'
-                    && puzzle[a - 1][b + 1] == 'M'
-                    && puzzle[a + 1][b - 1] == 'S'
-                    && puzzle[a + 1][b + 1] == 'S'
-                {
-                    instances += 1;
-                }
-
-                // Configuration three is S . S above and M . M below, check for that specifically
-                if puzzle[a - 1][b - 1] == 'S'
-                    && puzzle[a - 1][b + 1] == 'S'
-                    && puzzle[a + 1][b - 1] == 'M'
-                    && puzzle[a + 1][b + 1] == 'M'
-                {
-                    instances += 1;
-                }
-
-                // Configuration four is M . S above and M . S below, check for that specifically
-                if puzzle[a - 1][b - 1] == 'M'
-                    && puzzle[a - 1][b + 1] == 'S'
-                    && puzzle[a + 1][b - 1] == 'M'
-                    && puzzle[a + 1][b + 1] == 'S'
-                {
-                    instances += 1;
-                }
-            }
-        }
-    }
-
-    println!("Day 4 Part 2: {:?}", instances);
-
-    Ok(0)
 }
 
 fn run_day_5() -> Result<i32> {
@@ -696,32 +502,7 @@ fn move_guard(
     return (grid, set);
 }
 
-fn pretty_print(grid: &Vec<Vec<char>>) {
-    for row in grid {
-        for c in row {
-            print!("{}", c);
-        }
-        println!();
-    }
-}
-
 type Graph = HashMap<(usize, usize), HashSet<(usize, usize)>>;
-
-fn print_graph(graph: &Graph) {
-    // Want to print as a grid, with '.' indicating no edge and '#' indicating an edge
-    let mut grid: Vec<Vec<char>> = Vec::new();
-    for _ in 0..10 {
-        let mut row = Vec::new();
-        for _ in 0..10 {
-            row.push('.');
-        }
-        grid.push(row);
-    }
-
-    for ((i, j), _) in graph {
-        grid[*i][*j] = '#';
-    }
-}
 
 fn add_edge(graph: &mut Graph, i: usize, j: usize, new_i: usize, new_j: usize) {
     if i == new_i && j == new_j {

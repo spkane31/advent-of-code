@@ -116,45 +116,6 @@ fn perimeter(points: Vec<(usize, usize)>) -> usize {
     perimeter
 }
 
-fn sides(coordinates: Vec<(usize, usize)>) -> usize {
-    // Handle empty input case
-    if coordinates.is_empty() {
-        return 0;
-    }
-
-    // If only one point, it's a 4-sided shape (point becomes a small square)
-    if coordinates.len() == 1 {
-        return 4;
-    }
-
-    // Track unique line segments
-    let mut unique_sides = std::collections::HashSet::new();
-
-    // Check all possible sides
-    for i in 0..coordinates.len() {
-        for j in 0..coordinates.len() {
-            if i == j {
-                continue;
-            }
-
-            let (x1, y1) = coordinates[i];
-            let (x2, y2) = coordinates[j];
-
-            // Horizontal sides
-            if y1 == y2 {
-                unique_sides.insert((x1.min(x2), y1, x1.max(x2), y1));
-            }
-
-            // Vertical sides
-            if x1 == x2 {
-                unique_sides.insert((x1, y1.min(y2), x1, y1.max(y2)));
-            }
-        }
-    }
-
-    unique_sides.len()
-}
-
 fn count_region_sides(region: Vec<(i32, i32)>) -> usize {
     let mut side_count = 0;
     for dir in DIR {
