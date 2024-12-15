@@ -92,6 +92,14 @@ fn main() {
                 Ok(_) => (),
                 Err(e) => println!("Error in day 12: {:?}", e),
             },
+            13 => match days::day13::run() {
+                Ok(_) => (),
+                Err(e) => println!("Error in day 13: {:?}", e),
+            },
+            14 => match days::day14::run() {
+                Ok(_) => (),
+                Err(e) => println!("Error in day 14: {:?}", e),
+            },
             n => println!("Solution for day {} is not implemented yet.", n),
         }
         println!("Total runtime: {:?}", start.elapsed());
@@ -117,6 +125,11 @@ fn main() {
             days::day03::run,
             days::day04::run,
             days::day05::run,
+            days::day10::run,
+            days::day11::run,
+            days::day12::run,
+            days::day13::run,
+            days::day14::run,
         ];
 
         for func in funcs {
@@ -179,6 +192,14 @@ fn main() {
                 12 => match days::day12::run() {
                     Ok(_) => (),
                     Err(e) => println!("Error in day 12: {:?}", e),
+                },
+                13 => match days::day13::run() {
+                    Ok(_) => (),
+                    Err(e) => println!("Error in day 13: {:?}", e),
+                },
+                14 => match days::day14::run() {
+                    Ok(_) => (),
+                    Err(e) => println!("Error in day 14: {:?}", e),
                 },
                 _ => {}
             }

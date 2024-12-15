@@ -14,5 +14,7 @@
 | 10      | 2.891833ms    | |
 | 11      | 19.26525ms    | memoization is a real memory dig |
 | 12      | 12.32958ms    | do not understand what I wrote to find sides/corners |
+| 13      | 362.934375ms  | slower than I expected |
+| 14      | 195.294667ms  | needed some hints about finding the christmas tree |
 | ...     | ...           | |
 | Average | 14.083828ms   | |
