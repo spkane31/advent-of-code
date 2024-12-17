@@ -100,24 +100,25 @@ fn main() {
                 Ok(_) => (),
                 Err(e) => println!("Error in day 14: {:?}", e),
             },
+            15 => match days::day15::run() {
+                Ok(_) => (),
+                Err(e) => println!("Error in day 15: {:?}", e),
+            },
+            // 16 => match days::day16::run() {
+            //     Ok(_) => (),
+            //     Err(e) => println!("Error in day 16: {:?}", e),
+            // },
+            17 => match days::day17::run() {
+                Ok(_) => (),
+                Err(e) => println!("Error in day 17: {:?}", e),
+            },
+            _ => {}
             n => println!("Solution for day {} is not implemented yet.", n),
         }
         println!("Total runtime: {:?}", start.elapsed());
     } else if args.all {
         let total = Instant::now();
         let mut count: usize = 0;
-
-        let funcs = vec![days::day01::run, days::day02::run, days::day10::run];
-
-        for func in funcs {
-            let start = Instant::now();
-            match func() {
-                Ok(_) => (),
-                Err(e) => println!("Error in day {}: {:?}", count + 1, e),
-            }
-            count += 1;
-            println!("Day {} runtime: {:?}", count, start.elapsed());
-        }
 
         let funcs = vec![
             days::day01::run,
@@ -130,17 +131,19 @@ fn main() {
             days::day12::run,
             days::day13::run,
             days::day14::run,
+            days::day15::run,
+            days::day17::run,
         ];
 
-        for func in funcs {
-            let start = Instant::now();
-            match func() {
-                Ok(_) => (),
-                Err(e) => println!("Error in day {}: {:?}", count + 1, e),
-            }
-            count += 1;
-            println!("Day {} runtime: {:?}", count, start.elapsed());
-        }
+        // for func in funcs {
+        //     let start = Instant::now();
+        //     match func() {
+        //         Ok(_) => (),
+        //         Err(e) => println!("Error in day {}: {:?}", count + 1, e),
+        //     }
+        //     count += 1;
+        //     println!("Day {} runtime: {:?}", count, start.elapsed());
+        // }
 
         for i in 1..26 {
             let start = Instant::now();
@@ -200,6 +203,18 @@ fn main() {
                 14 => match days::day14::run() {
                     Ok(_) => (),
                     Err(e) => println!("Error in day 14: {:?}", e),
+                },
+                15 => match days::day15::run() {
+                    Ok(_) => (),
+                    Err(e) => println!("Error in day 15: {:?}", e),
+                },
+                // 16 => match days::day16::run() {
+                //     Ok(_) => (),
+                //     Err(e) => println!("Error in day 16: {:?}", e),
+                // },
+                17 => match days::day17::run() {
+                    Ok(_) => (),
+                    Err(e) => println!("Error in day 17: {:?}", e),
                 },
                 _ => {}
             }

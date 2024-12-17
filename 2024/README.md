@@ -16,5 +16,8 @@
 | 12      | 12.32958ms    | do not understand what I wrote to find sides/corners |
 | 13      | 362.934375ms  | slower than I expected |
 | 14      | 195.294667ms  | needed some hints about finding the christmas tree |
+| 15      | -             | I'll probably get back to it |
+| 16      | -             | I'll probably get back to it |
+| 17      | 1.271834ms    | |
 | ...     | ...           | |
-| Average | 14.083828ms   | |
+| Average | 38.24026   | |
