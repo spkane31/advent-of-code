@@ -1,7 +1,5 @@
 use std::fs;
-use std::fs::File;
 use std::io;
-use std::io::BufReader;
 
 pub fn run() -> Result<(), Box<dyn std::error::Error>> {
     let data = match read_file_to_string("day15/sample.txt") {
@@ -13,7 +11,7 @@ pub fn run() -> Result<(), Box<dyn std::error::Error>> {
 
     let grid = parse_grid(grid);
     let moves = parse_moves(moves);
-    let (x, y) = location_of(&grid);
+    let (_x, _y) = location_of(&grid);
 
     for m in moves {
         match m {
@@ -63,7 +61,7 @@ fn location_of(grid: &Vec<Vec<char>>) -> (usize, usize) {
     (0, 0)
 }
 
-fn print_grid(grid: &Vec<Vec<char>>) {
+fn _print_grid(grid: &Vec<Vec<char>>) {
     for row in grid {
         for cell in row {
             print!("{}", cell);
