@@ -79,10 +79,6 @@ fn main() {
                 Ok(_) => (),
                 Err(e) => println!("Error in day 15: {:?}", e),
             },
-            // 16 => match days::day16::run() {
-            //     Ok(_) => (),
-            //     Err(e) => println!("Error in day 16: {:?}", e),
-            // },
             17 => match days::day17::run() {
                 Ok(_) => (),
                 Err(e) => println!("Error in day 17: {:?}", e),
@@ -90,6 +86,10 @@ fn main() {
             19 => match days::day19::run() {
                 Ok(_) => (),
                 Err(e) => println!("Error in day 19: {:?}", e),
+            },
+            22 => match days::day22::run() {
+                Ok(_) => (),
+                Err(e) => println!("Error in day 22: {:?}", e),
             },
             n => println!("Solution for day {} is not implemented yet.", n),
         }
@@ -116,6 +116,7 @@ fn main() {
             // days::day16::run,
             days::day17::run,
             days::day19::run,
+            days::day22::run,
         ];
 
         for (count, func) in funcs.iter().enumerate() {
