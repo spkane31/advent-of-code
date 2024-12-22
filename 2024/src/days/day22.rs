@@ -1,30 +1,14 @@
 use std::fs;
 
 pub fn run() -> Result<(), Box<dyn std::error::Error>> {
-    let input = fs::read_to_string("day22/sample2.txt")?;
+    let input = fs::read_to_string("day22/input.txt")?;
     let numbers = parse_numbers(&input);
 
-    let sum: i64 = numbers.iter().map(|&x| get_next(x, 2000)).sum();
+    // let sum: i64 = numbers.iter().map(|&x| get_next(x, 2000)).sum();
 
-    println!("Day 22 Part 1: {}", sum);
+    println!("Day 22 Part 1: {}", part1(numbers.clone()));
 
-    let mut total: i64 = 0;
-    for num in numbers {
-        let prices: Vec<i64> = get_prices(num, 2000);
-
-        let ones: Vec<i64> = prices.iter().map(|w| w % 10).collect();
-
-        let ones_diff: Vec<i64> = prices.windows(2).map(|w| ones_diff(w[0], w[1])).collect();
-        match find_subvector(ones_diff, vec![-2, 1, -1, 3]) {
-            Some(i) => {
-                println!("num, i, ones[i]: {}, {}, {}", num, i, ones[i]);
-                total += ones[i];
-            }
-            None => (),
-        }
-    }
-
-    println!("Day 22 Part 2: {}", total);
+    println!("Day 22 Part 2: {}", part2(numbers.clone()));
 
     Ok(())
 }
@@ -36,38 +20,68 @@ fn parse_numbers(input: &str) -> Vec<i64> {
         .collect()
 }
 
-fn get_prices(num: i64, count: i64) -> Vec<i64> {
-    (0..count).map(|c| get_next(num, c)).collect()
-}
-
-fn find_subvector(haystack: Vec<i64>, needle: Vec<i64>) -> Option<usize> {
-    haystack
-        .windows(needle.len())
-        .position(|window| window == needle.as_slice())
-}
-
-fn ones_diff(a: i64, b: i64) -> i64 {
-    (b % 10) - (a % 10)
-}
-
-fn get_next(num: i64, count: i64) -> i64 {
-    let mut next = num;
-    for _ in 0..count {
-        next = next_number(next);
-    }
-    next
-}
-
-fn next_number(num: i64) -> i64 {
-    let a = prune(mix(num, num * 64));
-    let b = prune(mix(a, a / 32));
-    prune(mix(b, b * 2048))
-}
-
-fn mix(a: i64, b: i64) -> i64 {
-    a ^ b
-}
-
 fn prune(a: i64) -> i64 {
     a % 16777216
+}
+
+fn part1(secrets: Vec<i64>) -> i64 {
+    secrets
+        .iter()
+        .map(|&secret| {
+            let mut result = secret;
+
+            for _ in 0..2000 {
+                result = encode(result);
+            }
+
+            result as i64
+        })
+        .sum::<i64>()
+}
+
+fn part2(secrets: Vec<i64>) -> i64 {
+    // store state in vectors instead of hashmaps/hashsets
+    let mut costs = vec![0; 0xFFFFF];
+    let mut seen = vec![0; 0xFFFFF];
+
+    for secret in secrets {
+        let mut result = secret;
+        let mut previous_cost = result % 10;
+        let mut deltas = 0;
+
+        for i in 0..2000 {
+            result = encode(result);
+            let cost = result % 10;
+
+            // offset cost delta by +10 and represent as 5 bit unsigned int (max == 19 == 0b10101)
+            // store sliding window of 4 deltas as a 20 bit unsigned int (max == 0xFFFFF)
+            deltas = ((deltas << 5) & 0xFFFFF) + 10 + cost - previous_cost;
+
+            // start checking prices once deltas window is populated
+            // only counting the first occurance of each unique delta sequence
+            if seen[deltas as usize] != secret && i > 3 {
+                seen[deltas as usize] = secret;
+                costs[deltas as usize] += cost;
+            }
+
+            previous_cost = cost;
+        }
+    }
+
+    costs.iter().max().cloned().unwrap()
+}
+
+fn encode(n: i64) -> i64 {
+    // this function is a simplification of operations:
+    //
+    // n ^= n * 64    --> operand is base 2, can be done by bit shifting left by log2(64) == 6
+    // n %= 16777216  --> 16777216 == 0x1000000, can be done by bit masking 0xFFFFFF
+    // n ^= n / 32    --> operand is base 2, can be done by bit shifting right by log2(32) == 5
+    // n %= 16777216  --> number of bits will never increase after division, modulo not needed
+    // n ^= n * 2048  --> operand is base 2, can be done by bit shifting left by log2(2048) == 11
+    // n %= 16777216
+
+    let a = (n ^ (n << 6)) & 0xFFFFFF;
+    let b = a ^ (a >> 5);
+    (b ^ (b << 11)) & 0xFFFFFF
 }
