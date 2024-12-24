@@ -20,10 +20,6 @@ fn parse_numbers(input: &str) -> Vec<i64> {
         .collect()
 }
 
-fn prune(a: i64) -> i64 {
-    a % 16777216
-}
-
 fn part1(secrets: Vec<i64>) -> i64 {
     secrets
         .iter()

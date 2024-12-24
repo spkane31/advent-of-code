@@ -91,6 +91,14 @@ fn main() {
                 Ok(_) => (),
                 Err(e) => println!("Error in day 22: {:?}", e),
             },
+            23 => match days::day23::run() {
+                Ok(_) => (),
+                Err(e) => println!("Error in day 23: {:?}", e),
+            },
+            24 => match days::day24::run() {
+                Ok(_) => (),
+                Err(e) => println!("Error in day 24: {:?}", e),
+            },
             n => println!("Solution for day {} is not implemented yet.", n),
         }
         println!("Total runtime: {:?}", start.elapsed());
@@ -117,6 +125,8 @@ fn main() {
             days::day17::run,
             days::day19::run,
             days::day22::run,
+            days::day23::run,
+            days::day24::run,
         ];
 
         for (count, func) in funcs.iter().enumerate() {
